@@ -1,0 +1,17 @@
+ public int XXX(String haystack, String needle) {
+        if (needle == null || needle.equals("")) {
+            return 0;
+        }
+
+        for (int i = 0; i <= haystack.length() - needle.length(); i++) {
+            if (haystack.substring(i, i + needle.length()).equals(needle)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+undefined
+for (i = 0; i < document.getElementsByTagName("code").length; i++) {     console.log(document.getElementsByTagName("code")[i].innerText); }
+
+

@@ -1,0 +1,8 @@
+ int XXX(vector<int>& nums) {
+	if (nums.size() < 2) return nums.size();
+	int j = 0;
+	for (int i = 1; i < nums.size(); i++)
+		if (nums[j] != nums[i]) nums[++j] = nums[i];
+	return ++j;
+}
+

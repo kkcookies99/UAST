@@ -1,0 +1,10 @@
+class Solution {
+public:
+    int XXX(TreeNode* root) {
+        if(root == NULL) return 0;
+        if(root->left == NULL) return XXX(root->right)+1;
+        else if(root->right == NULL) return XXX(root->left)+1;
+        else return min(XXX(root->left),XXX(root->right))+1;
+    }
+};
+

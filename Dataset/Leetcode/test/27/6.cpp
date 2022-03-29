@@ -1,0 +1,10 @@
+ class Solution {
+public:
+    int XXX(vector<int>& nums, int val) {
+	int j = -1;
+	for (int i = 0; i < nums.size(); i++)
+		if (nums[i] != val) nums[++j] = nums[i];
+	return ++j;
+    }
+};
+
