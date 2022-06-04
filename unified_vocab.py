@@ -1,7 +1,3 @@
-# -*- coding = utf-8 -*-
-# @Time: 2021/4/18 16:57
-# @Author: CasoWang
-# @Software: PyCharm
 from os import path
 from tree_sitter import Language, Parser
 from pathlib import Path
@@ -16,8 +12,6 @@ import json
 from tqdm import tqdm
 
 
-#---------------------------------------------
-#---------------------------------------------
 class ASTParser():
     import logging
     LOGGER = logging.getLogger('ASTParser')
@@ -51,7 +45,6 @@ class ASTParser():
         lang = self.Languages.get(language)
         self.parser.set_language(lang)
         return self.parser.parse(bytes(code_snippet,"utf8"))
-    # return: tree_sitter.Tree object
     def parse(self, code_snippet):
         return self.parser.parse(bytes(code_snippet,"utf8"))
 
@@ -64,7 +57,7 @@ def remove_comments_and_docstrings(source):
     def replacer(match):
         s = match.group(0)
         if s.startswith('/'):
-            return " "  # note: a space and not an empty string
+            return " "
         else:
             return s
 
@@ -111,8 +104,6 @@ unified_vocab_dict = {
     # return ast_path
 
 
-#---------------------------------------------
-#---------------------------------------------
 class ASTDict:
     UNK_TAG = "UNK"
     PAD_TAG = "PAD"

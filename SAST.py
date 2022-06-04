@@ -1,14 +1,8 @@
-# -*- coding = utf-8 -*-
-# @Time: 2021/3/31 10:51
-# @Author: CasoWang
-# @File: attention.py
-# @Software: PyCharm
-
 import torch
 import torch.nn as nn
 from torch.optim import Adam
 import torch.nn.functional as F
-from data_loader_SAST_UV import get_dataloader
+from data_loader_SAST import get_dataloader
 import config
 from tqdm import tqdm
 import math
@@ -67,13 +61,9 @@ class SelfAttention(nn.Module):
                 "The hidden size (%d) is not a multiple of the number of attention "
                 "heads (%d)" % (hidden_size, num_attention_heads))
         self.num_attention_heads = num_attention_heads  # 8
-        self.attention_head_size = int(hidden_size / num_attention_heads)  # 16 
+        self.attention_head_size = int(hidden_size / num_attention_heads)
         self.all_head_size = int(self.num_attention_heads * self.attention_head_size)
-        # all_head_size = 128 
-
-
-
-        self.query = nn.Linear(hidden_size, self.all_head_size)  # 128, 128
+        self.query = nn.Linear(hidden_size, self.all_head_size)
         self.key = nn.Linear(hidden_size, self.all_head_size)
         self.value = nn.Linear(hidden_size, self.all_head_size)
 
@@ -87,35 +77,27 @@ class SelfAttention(nn.Module):
         return x.permute(0, 2, 1, 3)  # [bs, 8, seqlen, 16]
 
     def forward(self, hidden_states, attention_mask):
-        # eg: attention_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])  shape=[bs, seqlen]
         attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)  
         attention_mask = (1.0 - attention_mask) * -10000.0  
 
-        # print("hidden_states,hidden_states.shape)
         mixed_query_layer = self.query(hidden_states)  # [bs, seqlen, hid_size]
-        mixed_key_layer = self.key(hidden_states)  # [bs, seqlen, hid_size]
-        mixed_value_layer = self.value(hidden_states)  # [bs, seqlen, hid_size]
+        mixed_key_layer = self.key(hidden_states)
+        mixed_value_layer = self.value(hidden_states)
 
-        query_layer = self.transpose_for_scores(mixed_query_layer)  # [bs, 8, seqlen, 16]
+        query_layer = self.transpose_for_scores(mixed_query_layer)
         key_layer = self.transpose_for_scores(mixed_key_layer)
-        value_layer = self.transpose_for_scores(mixed_value_layer)  # [bs, 8, seqlen, 16]
+        value_layer = self.transpose_for_scores(mixed_value_layer)
 
         attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
-        # [bs, 8, seqlen, 16]*[bs, 8, 16, seqlen]  ==> [bs, 8, seqlen, seqlen]
-        attention_scores = attention_scores / math.sqrt(self.attention_head_size)  # [bs, 8, seqlen, seqlen]
+        attention_scores = attention_scores / math.sqrt(self.attention_head_size)
         attention_scores = attention_scores + attention_mask
 
-
-        attention_probs = nn.Softmax(dim=-1)(attention_scores)  # [bs, 8, seqlen, seqlen]
-
-        # This is actually dropping out entire tokens to attend to, which might
-        # seem a bit unusual, but is taken from the original Transformer paper.
+        attention_probs = nn.Softmax(dim=-1)(attention_scores)
         attention_probs = self.dropout(attention_probs)
 
-        #bs, 8, seqlen, seqlen]*[bs, 8, seqlen, 16] = [bs, 8, seqlen, 16]
-        context_layer = torch.matmul(attention_probs, value_layer)  # [bs, 8, seqlen, 16]
-        context_layer = context_layer.permute(0, 2, 1, 3).contiguous()  # [bs, seqlen, 8, 16]
-        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)  # [bs, seqlen, 128]
+        context_layer = torch.matmul(attention_probs, value_layer)
+        context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
+        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
         context_layer = context_layer.view(*new_context_layer_shape)
         return context_layer  
 
@@ -128,22 +110,13 @@ def sequence_mask(input_):
     return mask
 
 
-def drawGraph(input_matrix):
-    sns.set()
-    plt.figure(dpi=120)
-    sns.heatmap(data=input_matrix.cpu().numpy(),
-                cmap=plt.get_cmap('Greens'),  # matplotlib
-                )
-    plt.title("Token original")
-    plt.show()
-
 
 def train(epoch, model, data_loader):
     print("start training...")
 
     # model = MyModel().to(config.device)
     # optimizer = Adam(model.parameters(),lr=0.001).to(config.device)
-    # train_dataloader = get_dataloader(train=True) #loading data
+    # train_dataloader = get_dataloader(train="train") #loading data
 
     model.train()
     for i in range(epoch):
@@ -167,7 +140,6 @@ def train(epoch, model, data_loader):
         #     for params in optimizer.param_groups:  
         #         params['lr'] *= 0.8  
 
-       
         # torch.save(model.state_dict(), "./checkpoints/test_mymodel_%d.pth" % i)
         torch.save(model.state_dict(), "./checkpoints//SAST-UV_model_50.pth")
         # torch.save(optimizer.state_dict(), "./checkpoints/test_optimizer_%d.pth" % i)
@@ -232,7 +204,7 @@ def test():
     label_list = []
     pred_list = []
 
-    test_dataloder = get_dataloader(train=False)  
+    test_dataloder = get_dataloader(train="test")
     
     model = ASTModal().eval()
     model.load_state_dict(torch.load("./checkpoints/SAST-UV_model_50.pth"))
@@ -280,7 +252,7 @@ def test():
 if __name__ == '__main__':
     model = ASTModal().to(config.device)
     optimizer = Adam(model.parameters(),lr=0.001)
-    train_dataloader = get_dataloader(train=True) #loading data
+    train_dataloader = get_dataloader(train="train") #loading data
     train(50,model,train_dataloader)
     evaluate(model, train_dataloader)
     test()

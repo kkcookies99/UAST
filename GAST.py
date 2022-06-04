@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.optim import Adam
 import torch.nn.functional as F
 import config
-from data_loader_GAST_UV import get_graph_dataloader
+from data_loader_GAST import get_graph_dataloader
 from tqdm import tqdm
 import math
 import numpy as np
@@ -41,7 +41,6 @@ class GraphConvolution(nn.Module):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        # parameter
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
@@ -51,16 +50,13 @@ class GraphConvolution(nn.Module):
 
     
     def reset_parameters(self):
-
         stdv = 1. / math.sqrt(self.weight.size(1))
         self.weight.data.uniform_(-stdv, stdv)
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
     def forward(self, input_X, adj):
-
         support = torch.matmul(input_X, self.weight)
-        # output = torch.spmm(adj, support)
         output = torch.matmul(adj, support)
 
         if self.bias is not None:
@@ -159,7 +155,7 @@ def test():
     label_list = []
     pred_list = []
 
-    test_dataloder = get_graph_dataloader(train=False)
+    test_dataloder = get_graph_dataloader(train="test")
 
     model = GCN(nfeat=len(dict_ast_path),
                 nhid=64,  #
@@ -216,7 +212,7 @@ if __name__ == '__main__':
                 nclass=16,
                 dropout=0.5).to(config.device)
     optimizer = Adam(model.parameters(),lr=0.001)
-    train_dataloader = get_graph_dataloader() #loading data
+    train_dataloader = get_graph_dataloader(train="train") #loading data
     train(5,model,train_dataloader)
     evaluate(model, train_dataloader)
     test()

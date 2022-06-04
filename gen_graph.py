@@ -58,9 +58,9 @@ def gen_feature(ast_path,dict_ast_path):
         i = i.strip()
         if i is not "":
             ast_path_list.append(i)
-    AST_index = dict_ast_path.transform(ast_path_list)  # 一个长度为800
+    AST_index = dict_ast_path.transform(ast_path_list)  # 800
     AST_fea_tensor = torch.tensor(AST_index)
-    fea_onehot = F.one_hot(AST_fea_tensor,num_classes=len(dict_ast_path))  # 默认按照targets其中的最大�?1作为one_hot编码的长�?
+    fea_onehot = F.one_hot(AST_fea_tensor,num_classes=len(dict_ast_path))
     # print(fea_onehot)
     # print(fea_onehot.shape)
     #padding tensor to 400-D

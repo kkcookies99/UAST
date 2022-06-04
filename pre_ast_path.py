@@ -1,7 +1,3 @@
-# -*- coding = utf-8 -*-
-# @Time: 2021/4/18 16:57
-# @Author: CasoWang
-# @Software: PyCharm
 from os import path
 from tree_sitter import Language, Parser
 from pathlib import Path
@@ -16,13 +12,12 @@ import json
 from tqdm import tqdm
 
 #---------------------------------------------
-#1.构建token词典
-#  把token转化成number序列
+#1.token dictionary
+#  token -> number
 #---------------------------------------------
 class Token2Num:
-    UNK_TAG = "UNK" #uknown tag表示词典里面没有出现的词（用新的数据测试的时候）
-    PAD_TAG = "PAD" #保证每一个batch都是一样的size
-
+    UNK_TAG = "UNK"
+    PAD_TAG = "PAD"
     UNK = 0
     PAD = 1
     def __init__(self):
@@ -30,25 +25,14 @@ class Token2Num:
             self.UNK_TAG:self.UNK,
             self.PAD_TAG:self.PAD
         }
-        self.count = {} #统计词频
+        self.count = {}
 
 
     def fit(self,codetokens):
-        """把每一个code保存到dict里面
-        :param codetokens : [codetoken1,codetoken2...]
-        """
         for token in codetokens:
-            self.count[token] = self.count.get(token,0) + 1 #统计词频 在的话就+1不再就为0
+            self.count[token] = self.count.get(token,0) + 1
 
     def build_vocab(self,min=0,max=None,max_features=None):
-        """
-        生成词典
-        :param min:最小出现的次数
-        :param max:最大的次数
-        :param max_features:一共保留多少个词语
-        :return:
-        """
-
         if min is not None:
             self.count = {token:value for token,value in self.count.items() if value > min}
 
@@ -75,23 +59,19 @@ class Token2Num:
 
         if max_len is not None:
             if max_len > len(codetokens):
-                codetokens = codetokens + [self.PAD_TAG]*(max_len-len(codetokens)) #填充
+                codetokens = codetokens + [self.PAD_TAG]*(max_len-len(codetokens)) #padding
             if max_len < len(codetokens):
-                codetokens = codetokens[:max_len] #裁剪
+                codetokens = codetokens[:max_len]
         return [self.dict.get(token,self.UNK) for token in codetokens]
 
     def inverse_transform(self,indices):
-        '''
-        :param indices: [1,2,3,4,...]
-        :return:
-        '''
         return [self.inverse_dict.get(idx) for idx in indices]
 
     def __len__(self):
         return len(self.dict)
 
 #---------------------------------------------
-#2.把所有语言的源代码解析成AST
+#2.code -> AST
 #---------------------------------------------
 class ASTParser():
     import logging
@@ -126,7 +106,7 @@ class ASTParser():
         lang = self.Languages.get(language)
         self.parser.set_language(lang)
         return self.parser.parse(bytes(code_snippet,"utf8"))
-    #解析代码成ast
+    #code -> ast
     # return: tree_sitter.Tree object
     def parse(self, code_snippet):
         return self.parser.parse(bytes(code_snippet,"utf8"))
@@ -154,7 +134,6 @@ def remove_comments_and_docstrings(source):
             temp.append(x)
     return '\n'.join(temp)
 
-#根据文件的扩展名字来决定解析的语言
 language = {
     "c": "c",
     "cs": "c_sharp",
@@ -218,9 +197,6 @@ class ASTDict:
         self.inverse_dict = dict(zip(self.dict.values(),self.dict.keys()))
 
     def transform(self,codetokens,max_len=None):
-        # for token in codetokens:
-        #     self.dict.get(token,self.UNK)
-
         if max_len is not None:
             if max_len > len(codetokens):
                 codetokens = codetokens + [self.PAD_TAG]*(max_len-len(codetokens))
